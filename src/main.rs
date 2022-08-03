@@ -25,17 +25,20 @@ fn main() -> std::io::Result<()> {
         .finish();
     set_global_default(collector).unwrap();
 
+    // Easy to connect to the socket. Tail the file and send it over the socket
+    // `journalctl -f | nc localhost 3000`
     let listener = TcpListener::bind("0.0.0.0:3000")?;
+    info!("Listening for connections");
 
     for stream in listener.incoming() {
         let stream = stream?;
         let peer_addr = stream.peer_addr().unwrap();
-        let connectedSpan = span!(Level::TRACE, "connection");
+        let connected_span = span!(Level::TRACE, "connection");
         info!("Accepting connection from {}", peer_addr);
         spawn(|| {
             handle_client(stream);
         });
-        let _connectedSpanGuard = connectedSpan.enter();
+        let _guard = connected_span.enter();
     }
     Ok(())
 }
